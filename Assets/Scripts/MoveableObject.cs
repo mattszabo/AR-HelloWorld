@@ -18,6 +18,16 @@ public class MoveableObject : MonoBehaviour {
 		material.color = selectedColour;
 	}
 
+	void OnTouchStay() {
+		Debug.Log("Matt - ...");
+		material.color = selectedColour;
+	}
+	
+	void OnTouchMoved(Vector3 Point) {
+		Debug.Log("Matt - move " + Point.ToString());
+		material.color = selectedColour;
+	}
+
 	void OnTouchUp() {
 		Debug.Log("Matt - touch up!");
 		material.color = defaultColour;

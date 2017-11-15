@@ -146,10 +146,17 @@ namespace GoogleARCore.HelloAR
                             Renderer rend = cube.GetComponent<Renderer>();
                             if(rend != null && rend.bounds.Contains(hit.Point))
                             {
-                                Debug.Log("Matt - " + touch.phase.ToString());
-                                if(touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved)
+                                if(touch.phase == TouchPhase.Began)
                                 {
                                     cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
+                                }
+                                if(touch.phase == TouchPhase.Stationary)
+                                {
+                                    cube.SendMessage("OnTouchStay", SendMessageOptions.DontRequireReceiver);
+                                }
+                                if(touch.phase == TouchPhase.Moved)
+                                {
+                                    cube.SendMessage("OnTouchMoved", hit.Point, SendMessageOptions.DontRequireReceiver);
                                 }
                                 if(touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                                 {
