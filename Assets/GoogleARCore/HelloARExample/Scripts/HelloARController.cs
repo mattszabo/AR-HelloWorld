@@ -162,29 +162,34 @@ namespace GoogleARCore.HelloAR
                     }
 
                     if(createNewCube && touch.phase == TouchPhase.Began) {
-                        // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
-                        // world evolves.
-                        var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
-
-                        // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
-                        // from the anchor's tracking.
-                        var cubeObject = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
-                            anchor.transform);
-
-                        // Cube should look at the camera but still be flush with the plane.
-                        cubeObject.transform.LookAt(m_firstPersonCamera.transform);
-                        cubeObject.transform.rotation = Quaternion.Euler(0.0f,
-                            cubeObject.transform.rotation.eulerAngles.y, cubeObject.transform.rotation.z);
-
-                        // Use a plane attachment component to maintain Cube's y-offset from the plane
-                        // (occurs after anchor updates).
-                        cubeObject.GetComponent<PlaneAttachment>().Attach(hit.Plane);
-                        
+                        GameObject newCube = createAnchoredCube(hit);
                         // Add to the list of Cube's
-                        m_allCubes.Add(cubeObject);
+                        m_allCubes.Add(newCube);
                     }
                 }
             }
+        }
+
+        private GameObject createAnchoredCube(TrackableHit hit) {
+            // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
+            // world evolves.
+            var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
+
+            // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
+            // from the anchor's tracking.
+            var cube = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
+                anchor.transform);
+
+            // Cube should look at the camera but still be flush with the plane.
+            cube.transform.LookAt(m_firstPersonCamera.transform);
+            cube.transform.rotation = Quaternion.Euler(0.0f,
+                cube.transform.rotation.eulerAngles.y, cube.transform.rotation.z);
+
+            // Use a plane attachment component to maintain Cube's y-offset from the plane
+            // (occurs after anchor updates).
+            cube.GetComponent<PlaneAttachment>().Attach(hit.Plane);
+
+            return cube;
         }
 
         /// <summary>
