@@ -43,7 +43,9 @@ namespace GoogleARCore.HelloAR
         /// <summary>
         /// A model to place when a raycast from a user touch hits a plane.
         /// </summary>
-        public GameObject m_andyAndroidPrefab;
+        public GameObject m_cubeAndroidPrefab;
+
+        private List<GameObject> m_allCubes = new List<GameObject>();
 
         /// <summary>
         /// A gameobject parenting UI for displaying the "searching for planes" snackbar.
@@ -131,23 +133,40 @@ namespace GoogleARCore.HelloAR
 
             if (Session.Raycast(m_firstPersonCamera.ScreenPointToRay(touch.position), raycastFilter, out hit))
             {
+                // If the user has touched an existing cube then change the cubes colour
+                if(m_allCubes.Count > 0)
+                {
+                    for(int i = 0; i < m_allCubes.Count; i++)
+                    {
+                        Renderer rend = m_allCubes[i].transform.GetChild(0).GetComponent<Renderer>();
+                        if(rend != null && rend.bounds.Contains(hit.Point))
+                        {
+                            rend.material.SetColor("_Color", Color.cyan);
+                            return;
+                        }
+                    }
+                }
+
                 // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
                 // world evolves.
                 var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
 
-                // Intanstiate an Andy Android object as a child of the anchor; it's transform will now benefit
+                // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
                 // from the anchor's tracking.
-                var andyObject = Instantiate(m_andyAndroidPrefab, hit.Point, Quaternion.identity,
+                var cubeObject = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
                     anchor.transform);
 
-                // Andy should look at the camera but still be flush with the plane.
-                andyObject.transform.LookAt(m_firstPersonCamera.transform);
-                andyObject.transform.rotation = Quaternion.Euler(0.0f,
-                    andyObject.transform.rotation.eulerAngles.y, andyObject.transform.rotation.z);
+                // Cube should look at the camera but still be flush with the plane.
+                cubeObject.transform.LookAt(m_firstPersonCamera.transform);
+                cubeObject.transform.rotation = Quaternion.Euler(0.0f,
+                    cubeObject.transform.rotation.eulerAngles.y, cubeObject.transform.rotation.z);
 
-                // Use a plane attachment component to maintain Andy's y-offset from the plane
+                // Use a plane attachment component to maintain Cube's y-offset from the plane
                 // (occurs after anchor updates).
-                andyObject.GetComponent<PlaneAttachment>().Attach(hit.Plane);
+                cubeObject.GetComponent<PlaneAttachment>().Attach(hit.Plane);
+                
+                // Add to the list of Cube's
+                m_allCubes.Add(cubeObject);
             }
         }
 
