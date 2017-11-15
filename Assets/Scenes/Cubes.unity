@@ -253,9 +253,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_firstPersonCamera: {fileID: 989943870}
+  touchInputMask:
+    serializedVersion: 2
+    m_Bits: 256
   m_trackedPlanePrefab: {fileID: 1654175882956584, guid: 6a35c744e5010405c847fad90282d2be,
     type: 2}
-  m_andyAndroidPrefab: {fileID: 1413716774825068, guid: 767a9334451dd4487944b27a949d0e0b,
+  m_cubeAndroidPrefab: {fileID: 1413716774825068, guid: 767a9334451dd4487944b27a949d0e0b,
     type: 2}
   m_searchingForPlaneUI: {fileID: 1133631540}
 --- !u!20 &989943870 stripped
@@ -424,7 +427,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
+  m_BlockingObjects: 3
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -498,6 +501,11 @@ Prefab:
     - target: {fileID: 4892153982037908, guid: c10877f7cd5764de18d46d7b777d1faa, type: 2}
       propertyPath: m_RootOrder
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 114072643661330778, guid: c10877f7cd5764de18d46d7b777d1faa,
+        type: 2}
+      propertyPath: m_UpdateType
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: c10877f7cd5764de18d46d7b777d1faa, type: 2}

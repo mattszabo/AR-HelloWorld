@@ -35,6 +35,8 @@ namespace GoogleARCore.HelloAR
         /// </summary>
         public Camera m_firstPersonCamera;
 
+        public LayerMask touchInputMask;
+
         /// <summary>
         /// A prefab for tracking and visualizing detected planes.
         /// </summary>
@@ -123,50 +125,65 @@ namespace GoogleARCore.HelloAR
             m_searchingForPlaneUI.SetActive(showSearchingUI);
 
             Touch touch;
-            if (Input.touchCount < 1 || (touch = Input.GetTouch(0)).phase != TouchPhase.Began)
+            
+            if (Input.touchCount > 0)
             {
-                return;
-            }
+                touch = Input.GetTouch(0);
 
-            TrackableHit hit;
-            TrackableHitFlag raycastFilter = TrackableHitFlag.PlaneWithinBounds | TrackableHitFlag.PlaneWithinPolygon;
+                TrackableHit hit;
+                TrackableHitFlag raycastFilter = TrackableHitFlag.PlaneWithinBounds | TrackableHitFlag.PlaneWithinPolygon;
 
-            if (Session.Raycast(m_firstPersonCamera.ScreenPointToRay(touch.position), raycastFilter, out hit))
-            {
-                // If the user has touched an existing cube then change the cubes colour
-                if(m_allCubes.Count > 0)
+                if (Session.Raycast(m_firstPersonCamera.ScreenPointToRay(touch.position), raycastFilter, out hit))
                 {
-                    for(int i = 0; i < m_allCubes.Count; i++)
+                    bool createNewCube = true;
+                    
+                    // If the user has touched an existing cube then change the cubes colour
+                    if(m_allCubes.Count > 0)
                     {
-                        Renderer rend = m_allCubes[i].transform.GetChild(0).GetComponent<Renderer>();
-                        if(rend != null && rend.bounds.Contains(hit.Point))
+                        for(int i = 0; i < m_allCubes.Count; i++)
                         {
-                            rend.material.SetColor("_Color", Color.cyan);
-                            return;
+                            GameObject cube = m_allCubes[i].transform.GetChild(0).gameObject;
+                            Renderer rend = cube.GetComponent<Renderer>();
+                            if(rend != null && rend.bounds.Contains(hit.Point))
+                            {
+                                Debug.Log("Matt - " + touch.phase.ToString());
+                                if(touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved)
+                                {
+                                    cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
+                                }
+                                if(touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                                {
+                                    cube.SendMessage("OnTouchUp", SendMessageOptions.DontRequireReceiver);
+                                }
+                                createNewCube = false;
+                                break;
+                            }
                         }
                     }
+
+                    if(createNewCube && touch.phase == TouchPhase.Began) {
+                        // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
+                        // world evolves.
+                        var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
+
+                        // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
+                        // from the anchor's tracking.
+                        var cubeObject = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
+                            anchor.transform);
+
+                        // Cube should look at the camera but still be flush with the plane.
+                        cubeObject.transform.LookAt(m_firstPersonCamera.transform);
+                        cubeObject.transform.rotation = Quaternion.Euler(0.0f,
+                            cubeObject.transform.rotation.eulerAngles.y, cubeObject.transform.rotation.z);
+
+                        // Use a plane attachment component to maintain Cube's y-offset from the plane
+                        // (occurs after anchor updates).
+                        cubeObject.GetComponent<PlaneAttachment>().Attach(hit.Plane);
+                        
+                        // Add to the list of Cube's
+                        m_allCubes.Add(cubeObject);
+                    }
                 }
-
-                // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
-                // world evolves.
-                var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
-
-                // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
-                // from the anchor's tracking.
-                var cubeObject = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
-                    anchor.transform);
-
-                // Cube should look at the camera but still be flush with the plane.
-                cubeObject.transform.LookAt(m_firstPersonCamera.transform);
-                cubeObject.transform.rotation = Quaternion.Euler(0.0f,
-                    cubeObject.transform.rotation.eulerAngles.y, cubeObject.transform.rotation.z);
-
-                // Use a plane attachment component to maintain Cube's y-offset from the plane
-                // (occurs after anchor updates).
-                cubeObject.GetComponent<PlaneAttachment>().Attach(hit.Plane);
-                
-                // Add to the list of Cube's
-                m_allCubes.Add(cubeObject);
             }
         }
 
