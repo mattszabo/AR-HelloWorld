@@ -1,67 +1,22 @@
-﻿//-----------------------------------------------------------------------
-// <copyright file="HelloARController.cs" company="Google">
-//
-// Copyright 2017 Google Inc. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// </copyright>
-//-----------------------------------------------------------------------
-
-namespace GoogleARCore.HelloAR
-{
+﻿namespace GoogleARCore.HelloAR {
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Rendering;
     using GoogleARCore;
 
-    /// <summary>
-    /// Controlls the HelloAR example.
-    /// </summary>
-    public class HelloARController : MonoBehaviour
-    {
-        /// <summary>
-        /// The first-person camera being used to render the passthrough camera.
-        /// </summary>
+    public class HelloARController : MonoBehaviour {
         public Camera m_firstPersonCamera;
-
         public LayerMask touchInputMask;
-
-        /// <summary>
-        /// A prefab for tracking and visualizing detected planes.
-        /// </summary>
         public GameObject m_trackedPlanePrefab;
-
-        /// <summary>
-        /// A model to place when a raycast from a user touch hits a plane.
-        /// </summary>
         public GameObject m_cubeAndroidPrefab;
-
-        private List<GameObject> m_allCubes = new List<GameObject>();
-
-        /// <summary>
-        /// A gameobject parenting UI for displaying the "searching for planes" snackbar.
-        /// </summary>
         public GameObject m_searchingForPlaneUI;
 
+        private List<GameObject> m_allCubes = new List<GameObject>();
         private List<TrackedPlane> m_newPlanes = new List<TrackedPlane>();
-
         private List<TrackedPlane> m_allPlanes = new List<TrackedPlane>();
 
         private Color[] m_planeColors = new Color[] {
             new Color(1.0f, 1.0f, 1.0f),
-            new Color(0.956f, 0.262f, 0.211f),
-            new Color(0.913f, 0.117f, 0.388f),
             new Color(0.611f, 0.152f, 0.654f),
             new Color(0.403f, 0.227f, 0.717f),
             new Color(0.247f, 0.317f, 0.709f),
@@ -76,16 +31,11 @@ namespace GoogleARCore.HelloAR
             new Color(1.0f, 0.756f, 0.027f)
         };
 
-        /// <summary>
-        /// The Unity Update() method.
-        /// </summary>
-        public void Update ()
-        {
+        public void Update() {
             _QuitOnConnectionErrors();
 
             // The tracking state must be FrameTrackingState.Tracking in order to access the Frame.
-            if (Frame.TrackingState != FrameTrackingState.Tracking)
-            {
+            if (Frame.TrackingState != FrameTrackingState.Tracking) {
                 const int LOST_TRACKING_SLEEP_TIMEOUT = 15;
                 Screen.sleepTimeout = LOST_TRACKING_SLEEP_TIMEOUT;
                 return;
@@ -94,29 +44,20 @@ namespace GoogleARCore.HelloAR
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             Frame.GetNewPlanes(ref m_newPlanes);
 
-            // Iterate over planes found in this frame and instantiate corresponding GameObjects to visualize them.
-            for (int i = 0; i < m_newPlanes.Count; i++)
-            {
-                // Instantiate a plane visualization prefab and set it to track the new plane. The transform is set to
-                // the origin with an identity rotation since the mesh for our prefab is updated in Unity World
-                // coordinates.
+            for (int i = 0; i < m_newPlanes.Count; i++) {
                 GameObject planeObject = Instantiate(m_trackedPlanePrefab, Vector3.zero, Quaternion.identity,
                     transform);
                 planeObject.GetComponent<TrackedPlaneVisualizer>().SetTrackedPlane(m_newPlanes[i]);
 
-                // Apply a random color and grid rotation.
                 planeObject.GetComponent<Renderer>().material.SetColor("_GridColor", m_planeColors[Random.Range(0,
                     m_planeColors.Length - 1)]);
                 planeObject.GetComponent<Renderer>().material.SetFloat("_UvRotation", Random.Range(0.0f, 360.0f));
             }
 
-            // Disable the snackbar UI when no planes are valid.
             bool showSearchingUI = true;
             Frame.GetAllPlanes(ref m_allPlanes);
-            for (int i = 0; i < m_allPlanes.Count; i++)
-            {
-                if (m_allPlanes[i].IsValid)
-                {
+            for (int i = 0; i < m_allPlanes.Count; i++) {
+                if (m_allPlanes[i].IsValid) {
                     showSearchingUI = false;
                     break;
                 }
@@ -125,50 +66,38 @@ namespace GoogleARCore.HelloAR
             m_searchingForPlaneUI.SetActive(showSearchingUI);
 
             Touch touch;
-            
-            if (Input.touchCount > 0)
-            {
+
+            if (Input.touchCount > 0) {
                 touch = Input.GetTouch(0);
 
                 TrackableHit hit;
                 TrackableHitFlag raycastFilter = TrackableHitFlag.PlaneWithinBounds | TrackableHitFlag.PlaneWithinPolygon;
 
-                if (Session.Raycast(m_firstPersonCamera.ScreenPointToRay(touch.position), raycastFilter, out hit))
-                {
+                if (Session.Raycast(m_firstPersonCamera.ScreenPointToRay(touch.position), raycastFilter, out hit)) {
                     bool createNewCube = true;
-                    
-                    // If the user has touched an existing cube then change the cubes colour
-                    if(m_allCubes.Count > 0)
-                    {
-                        for(int i = 0; i < m_allCubes.Count; i++)
-                        {
-                            GameObject cube = m_allCubes[i].transform.GetChild(0).gameObject;
-                            Renderer rend = cube.GetComponent<Renderer>();
-                            if(rend != null && rend.bounds.Contains(hit.Point))
-                            {
-                                if(touch.phase == TouchPhase.Began)
-                                {
-                                    cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
-                                }
-                                if(touch.phase == TouchPhase.Stationary)
-                                {
-                                    cube.SendMessage("OnTouchStay", SendMessageOptions.DontRequireReceiver);
-                                }
-                                if(touch.phase == TouchPhase.Moved)
-                                {
-                                    cube.SendMessage("OnTouchMoved", hit.Point, SendMessageOptions.DontRequireReceiver);
-                                }
-                                if(touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                                {
-                                    cube.SendMessage("OnTouchUp", SendMessageOptions.DontRequireReceiver);
-                                }
-                                createNewCube = false;
-                                break;
+
+                    for (int i = 0; i < m_allCubes.Count; i++) {
+                        GameObject cube = m_allCubes[i].transform.GetChild(0).gameObject;
+                        Renderer rend = cube.GetComponent<Renderer>();
+
+                        if (rend != null && rend.bounds.Contains(hit.Point)) {
+                            createNewCube = false;
+                            
+                            if (touch.phase == TouchPhase.Began) {
+                                cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
+                            } else if (touch.phase == TouchPhase.Stationary) {
+                                cube.SendMessage("OnTouchStay", SendMessageOptions.DontRequireReceiver);
+                            } else if (touch.phase == TouchPhase.Moved) {
+                                cube.SendMessage("OnTouchMoved", hit.Point, SendMessageOptions.DontRequireReceiver);
+                            } else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) {
+                                cube.SendMessage("OnTouchUp", SendMessageOptions.DontRequireReceiver);
                             }
+
+                            break;
                         }
                     }
 
-                    if(createNewCube && touch.phase == TouchPhase.Began) {
+                    if (createNewCube && touch.phase == TouchPhase.Began) {
                         GameObject newCube = createAnchoredCube(hit);
                         // Add to the list of Cube's
                         m_allCubes.Add(newCube);
@@ -178,65 +107,40 @@ namespace GoogleARCore.HelloAR
         }
 
         private GameObject createAnchoredCube(TrackableHit hit) {
-            // Create an anchor to allow ARCore to track the hitpoint as understanding of the physical
-            // world evolves.
             var anchor = Session.CreateAnchor(hit.Point, Quaternion.identity);
-
-            // Intanstiate an Cube Android object as a child of the anchor; it's transform will now benefit
-            // from the anchor's tracking.
             var cube = Instantiate(m_cubeAndroidPrefab, hit.Point, Quaternion.identity,
                 anchor.transform);
 
-            // Cube should look at the camera but still be flush with the plane.
             cube.transform.LookAt(m_firstPersonCamera.transform);
             cube.transform.rotation = Quaternion.Euler(0.0f,
                 cube.transform.rotation.eulerAngles.y, cube.transform.rotation.z);
 
             // Use a plane attachment component to maintain Cube's y-offset from the plane
-            // (occurs after anchor updates).
             cube.GetComponent<PlaneAttachment>().Attach(hit.Plane);
 
             return cube;
         }
 
-        /// <summary>
-        /// Quit the application if there was a connection error for the ARCore session.
-        /// </summary>
-        private void _QuitOnConnectionErrors()
-        {
-            // Do not update if ARCore is not tracking.
-            if (Session.ConnectionState == SessionConnectionState.DeviceNotSupported)
-            {
+        private void _QuitOnConnectionErrors() {
+            if (Session.ConnectionState == SessionConnectionState.DeviceNotSupported) {
                 _ShowAndroidToastMessage("This device does not support ARCore.");
                 Application.Quit();
-            }
-            else if (Session.ConnectionState == SessionConnectionState.UserRejectedNeededPermission)
-            {
+            } else if (Session.ConnectionState == SessionConnectionState.UserRejectedNeededPermission) {
                 _ShowAndroidToastMessage("Camera permission is needed to run this application.");
                 Application.Quit();
-            }
-            else if (Session.ConnectionState == SessionConnectionState.ConnectToServiceFailed)
-            {
+            } else if (Session.ConnectionState == SessionConnectionState.ConnectToServiceFailed) {
                 _ShowAndroidToastMessage("ARCore encountered a problem connecting.  Please start the app again.");
                 Application.Quit();
             }
         }
 
-        /// <summary>
-        /// Show an Android toast message.
-        /// </summary>
-        /// <param name="message">Message string to show in the toast.</param>
-        /// <param name="length">Toast message time length.</param>
-        private static void _ShowAndroidToastMessage(string message)
-        {
+        private static void _ShowAndroidToastMessage(string message) {
             AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
             AndroidJavaObject unityActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
 
-            if (unityActivity != null)
-            {
+            if (unityActivity != null) {
                 AndroidJavaClass toastClass = new AndroidJavaClass("android.widget.Toast");
-                unityActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
-                {
+                unityActivity.Call("runOnUiThread", new AndroidJavaRunnable(() => {
                     AndroidJavaObject toastObject = toastClass.CallStatic<AndroidJavaObject>("makeText", unityActivity,
                         message, 0);
                     toastObject.Call("show");
