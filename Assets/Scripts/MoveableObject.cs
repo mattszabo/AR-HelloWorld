@@ -10,7 +10,7 @@ public class MoveableObject : MonoBehaviour {
 	public Color selectedColour;
 
 	private bool isSelected;
-	private Vector3 newPosition;
+	private Vector3 position;
 	private TrackedPlane cubePlane;
 	private Material material;
 
@@ -26,13 +26,14 @@ public class MoveableObject : MonoBehaviour {
 	}
 
 	private void MoveObject() {
-		transform.position = new Vector3(newPosition.x, transform.position.y, newPosition.z);
+		transform.position = new Vector3(position.x, transform.position.y, position.z);
 	}
 
-	void OnTouchDown() {
+	void OnTouchDown(Vector3 Point) {
 		Debug.Log("Matt - touch down!");
 		material.color = selectedColour;
 		isSelected = true;
+		position = Point;
 	}
 
 	void OnTouchStay() {
@@ -41,7 +42,7 @@ public class MoveableObject : MonoBehaviour {
 	
 	void OnTouchMoved(Vector3 Point) {
 		Debug.Log("Matt - move " + Point.ToString());
-		newPosition = Point;
+		position = Point;
 	}
 
 	void OnTouchUp() {
