@@ -84,7 +84,7 @@
                             createNewCube = false;
 
                             if (touch.phase == TouchPhase.Began) {
-                                cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
+                                cube.SendMessage("OnTouchDown", hit.Point, SendMessageOptions.DontRequireReceiver);
                             } else if (touch.phase == TouchPhase.Stationary) {
                                 cube.SendMessage("OnTouchStay", SendMessageOptions.DontRequireReceiver);
                             } else if (touch.phase == TouchPhase.Moved) {
