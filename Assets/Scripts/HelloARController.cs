@@ -82,7 +82,7 @@
 
                         if (rend != null && rend.bounds.Contains(hit.Point)) {
                             createNewCube = false;
-                            
+
                             if (touch.phase == TouchPhase.Began) {
                                 cube.SendMessage("OnTouchDown", SendMessageOptions.DontRequireReceiver);
                             } else if (touch.phase == TouchPhase.Stationary) {
